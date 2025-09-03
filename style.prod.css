@@ -814,7 +814,7 @@ h2 { font-family: 'Sora', sans-serif; font-weight: 700; text-transform: uppercas
 .mission-journey::before { 
   content: ''; 
   position: absolute; 
-  left: 0; /* Começa na borda do container */
+  left: 18px; /* Começa na borda do container */
   top: 20px; 
   bottom: 20px; 
   width: 4px;
