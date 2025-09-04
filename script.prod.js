@@ -8,12 +8,13 @@
   const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
   document.addEventListener('DOMContentLoaded', () => {
-    // --- INÍCIO DA MODIFICAÇÃO: CORREÇÃO DO VH PARA CELULARES ---
+    // --- MODIFICAÇÃO CRÍTICA: CORREÇÃO DO VIEWPORT HEIGHT (VH) PARA CELULARES ---
+    // Esta função resolve o problema de layout instável em navegadores móveis.
+    // Ela calcula a altura real da janela e a armazena em uma variável CSS (--vh).
     function setRealViewportHeight() {
       const vh = window.innerHeight * 0.01;
       document.documentElement.style.setProperty('--vh', `${vh}px`);
     }
-    // Executa a função na carga e sempre que a janela for redimensionada
     setRealViewportHeight();
     window.addEventListener('resize', setRealViewportHeight);
     // --- FIM DA MODIFICAÇÃO ---
@@ -222,6 +223,7 @@
       slideId === 'inicio' ? startHeroCarousel() : stopHeroCarousel();
     }
 
+    // --- MODIFICAÇÃO CRÍTICA: LÓGICA DE ROLAGEM DE SLIDES ---
     function goToSlide(index) {
       if (isInteractionOverlayOpen || !container || !visibleSlides.length) return;
       index = clamp(index, 0, totalSlides - 1);
@@ -234,7 +236,12 @@
       setTimeout(() => prev?.classList.remove('is-leaving'), 600);
       allSlidesNodeList.forEach(s => s.classList.remove('active'));
       next?.classList.add('active');
-      container.style.transform = `translateY(-${index * 100}vh)`;
+      
+      // MODIFICAÇÃO: Usa a altura real da janela em pixels para o transform, em vez da unidade 'vh'.
+      // Isso garante que a rolagem seja precisa e não seja afetada pela barra de endereço do celular.
+      const pageHeight = window.innerHeight;
+      container.style.transform = `translateY(-${index * pageHeight}px)`;
+
       const id = next?.id || next?.getAttribute('data-slide-name') || '';
       if (id) history.replaceState(null, '', `#${id}`);
       currentSlide = index;
@@ -242,6 +249,7 @@
       updateSideNav(currentSlide);
       setTimeout(() => { isScrolling = false; }, 800);
     }
+    // --- FIM DA MODIFICAÇÃO ---
 
     // --- Event Listeners de Navegação ---
     window.addEventListener('wheel', (e) => {
@@ -332,7 +340,11 @@
           currentSlide = idx;
           allSlidesNodeList.forEach(s => s.classList.remove('active'));
           target.classList.add('active');
-          container.style.transform = `translateY(-${currentSlide * 100}vh)`;
+          
+          // MODIFICAÇÃO: Usa a altura real da janela para o posicionamento inicial, garantindo consistência.
+          const pageHeight = window.innerHeight;
+          container.style.transform = `translateY(-${currentSlide * pageHeight}px)`;
+
           updateDynamicThemes(target.id);
           updateSideNav(currentSlide);
           requestAnimationFrame(() => { container.style.transition = ''; });
@@ -346,9 +358,7 @@
     
     initializePage();
 
-    // ------------------------------
-    // CARROSSÉIS (LÓGICAS PRESERVADAS)
-    // ------------------------------
+    // --- CARROSSÉIS (LÓGICAS PRESERVADAS) ---
     (function initPlanCarousel() {
       const carousel = $('.plan-carousel');
       if (!carousel) return;
@@ -359,16 +369,23 @@
       if (!stage || planSlides.length === 0) return;
       let currentPlanIndex = 0;
       const totalPlans = planSlides.length;
+
+      // --- MODIFICAÇÃO: VALORES DINÂMICOS PARA CELULAR ---
+      // Detecta se a tela é de um dispositivo móvel e aplica valores diferentes
+      // para espaçamento e escala, tornando o carrossel 3D mais compacto e funcional.
+      const isMobile = window.innerWidth <= 900;
       const config = {
         autoplay: true,
         interval: 3500,
         pauseOnHover: true,
         swipeThreshold: 30,
-        zOffset: 160,
-        xSpacing: 110,
-        scaleStep: 0.25,
+        zOffset: isMobile ? 80 : 160,       // MODIFICADO
+        xSpacing: isMobile ? 65 : 110,      // MODIFICADO
+        scaleStep: isMobile ? 0.2 : 0.25,   // MODIFICADO
         preferReducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
       };
+      // --- FIM DA MODIFICAÇÃO ---
+
       function updateCarouselStyles() {
         planSlides.forEach((slide, index) => {
           const offset = index - currentPlanIndex;
@@ -490,9 +507,7 @@
       updatePosition();
     })();
     
-    // ------------------------------------
-    // LÓGICA GERAL DE MODAIS E OVERLAYS
-    // ------------------------------------
+    // --- LÓGICA GERAL DE MODAIS E OVERLAYS ---
     const allModals = $all('.modal');
     const visionOverlay = $('#vision-overlay');
     let activeModal = null;
@@ -605,10 +620,10 @@
         return;
       }
 
-      const companyPhone = '5545998317031';
+      const ComercialPhone = '5545998317031';
       const message = `Olá! Tenho interesse em contratar um plano da Mundial Telecom.\n\n*Plano de Interesse:* ${planText}\n*Nome:* ${name}\n*Telefone:* ${phone}\n*E-mail:* ${email}\n*Bairro:* ${bairro}\n\nAguardo o contato.`;
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${companyPhone}?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/${ComercialPhone}?text=${encodedMessage}`;
 
       formMessage.textContent = 'Obrigado! Estamos redirecionando você para o WhatsApp...';
       formMessage.classList.add('success');
@@ -644,10 +659,10 @@
         formMessage.classList.add('error');
         return;
       }
-      const companyPhone = '5545998317031';
+      const RH_Phone = '554598110375';
       const message = `Olá! Tenho interesse na vaga de *${jobTitle}*.\n\n*Nome:* ${name}\n*Telefone:* ${phone}\n*E-mail:* ${email}\n\nEstou enviando meu currículo em anexo para avaliação.`;
       const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${companyPhone}?text=${encodedMessage}`;
+      const whatsappUrl = `https://wa.me/${RH_Phone}?text=${encodedMessage}`;
       formMessage.textContent = 'Quase lá! Redirecionando para o WhatsApp. Por favor, anexe seu currículo na conversa antes de enviar.';
       setTimeout(() => {
         window.open(whatsappUrl, '_blank');
