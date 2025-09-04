@@ -8,6 +8,16 @@
   const clamp = (v, a, b) => Math.min(Math.max(v, a), b);
 
   document.addEventListener('DOMContentLoaded', () => {
+    // --- INÍCIO DA MODIFICAÇÃO: CORREÇÃO DO VH PARA CELULARES ---
+    function setRealViewportHeight() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+    // Executa a função na carga e sempre que a janela for redimensionada
+    setRealViewportHeight();
+    window.addEventListener('resize', setRealViewportHeight);
+    // --- FIM DA MODIFICAÇÃO ---
+
     // --- VARIÁVEIS GLOBAIS ---
     const G_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwhH0XjEWdIRhoqPiWw3oqe94P7TN4I3ev2ldiBZL_C5kP7YhPXROQlvRutOP1oImvl/exec';
     const container = $('.fullpage-container');
