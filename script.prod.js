@@ -135,9 +135,17 @@
     }
 
     function openJobModalOnClick(event) {
-      const card = event.currentTarget;
-      const jobTitle = card.getAttribute("data-job-title");
-      openModal($("#jobApplicationModal"), { jobTitle });
+    const card = event.currentTarget;
+    const jobTitle = card.getAttribute("data-job-title");
+
+    // Dispara evento para o Google Analytics
+    if (typeof gtag === 'function') {
+      gtag('event', 'view_job_application', {
+        'job_title': jobTitle
+      });
+    }
+
+    openModal($("#jobApplicationModal"), { jobTitle });
     }
 
     function openJobModalOnKey(event) {
@@ -760,7 +768,10 @@
       const fileInputText = $(".file-input-text");
       if (fileInputText) fileInputText.textContent = fileName;
     });
+
+
     const jobApplicationForm = $("#jobApplicationForm");
+
     jobApplicationForm?.addEventListener("submit", (e) => {
       e.preventDefault();
       const formMessage = $("#jobFormMessage");
@@ -777,6 +788,14 @@
         formMessage.classList.add("error");
         return;
       }
+
+      // Dispara evento de conversão para o Google Analytics
+      if (typeof gtag === 'function') {
+        gtag('event', 'submit_job_application', {
+            'job_title': jobTitle
+        });
+      }
+
       const RH_Phone = "554598110375";
       const message = `Olá! Tenho interesse na vaga de *${jobTitle}*.\n\n*Nome:* ${name}\n*Telefone:* ${phone}\n*E-mail:* ${email}\n\nEstou enviando meu currículo em anexo para avaliação.`;
       const encodedMessage = encodeURIComponent(message);
@@ -788,6 +807,8 @@
         closeModal();
       }, 2000);
     });
+
+
     $all(".mv-card").forEach((card) => {
       const targetId = card.getAttribute("data-target"),
         targetElement = $(`#${targetId}`);
