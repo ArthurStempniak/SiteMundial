@@ -782,8 +782,9 @@ h1, h2 {
   border-radius: 12px;
   padding: 20px;
   border: 1px solid #e9e4f5;
-  cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .job-card:hover {
@@ -828,9 +829,64 @@ h1, h2 {
   align-items: center;
   gap: 8px;
   transition: gap 0.3s ease;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.job-card:hover .job-card-apply { gap: 15px; }
+.job-card-apply:hover { gap: 15px; }
+
+/* --- ESTILOS ADICIONADOS PARA O BOTÃO "VER DETALHES" E MODAL --- */
+.job-card-actions {
+  margin-top: auto;
+  padding-top: 15px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.btn-details {
+  background-color: transparent;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-details:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.job-details-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  text-align: left;
+  line-height: 1.7;
+  max-height: 55vh;
+  overflow-y: auto;
+  padding-right: 15px;
+}
+
+.job-detail-section h3 {
+  font-family: 'Sora', sans-serif;
+  color: var(--primary-color);
+  border-bottom: 2px solid var(--accent-color);
+  padding-bottom: 8px;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+}
+
+.job-detail-section p, .job-detail-section ul {
+  margin: 0;
+  white-space: pre-wrap;
+}
 
 /* --- Modal / Form overlay --- */
 .modal {
@@ -901,7 +957,7 @@ h1, h2 {
 
 .modal-close:hover { transform: scale(1.1); }
 
-#planModalTitle, #jobModalTitle, .modal-title-icon {
+#planModalTitle, #jobModalTitle, #jobDetailsModalTitle, .modal-title-icon {
   font-size: 2rem;
   margin-bottom: 6px;
   color: var(--primary-color);
@@ -1671,6 +1727,8 @@ h1, h2 {
 
   /* Trabalhe Conosco */
   .job-listings { padding: 0; }
+  .job-card-actions { flex-direction: column; align-items: stretch; text-align: center;}
+
 
   /* MVV */
   .mv-section { padding: 40px 20px; }
@@ -1694,7 +1752,7 @@ h1, h2 {
     flex-direction: column;
   }
   .modal-inner { padding: 25px 20px; }
-  #planModalTitle, #jobModalTitle, .modal-title-icon { font-size: 1.5rem; }
+  #planModalTitle, #jobModalTitle, #jobDetailsModalTitle, .modal-title-icon { font-size: 1.5rem; }
   .form-row { flex-direction: column; align-items: stretch; gap: 10px; }
 }
 

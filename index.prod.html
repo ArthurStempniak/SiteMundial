@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <!-- Google tag (gtag.js) -->
+    <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-76YFZWGHHM"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -10,7 +10,6 @@
 
   gtag('config', 'G-76YFZWGHHM');
 </script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Mundial Telecom — A Conexão que Transforma</title>
@@ -405,23 +404,23 @@
       <button class="modal-close" aria-label="Fechar" type="button">&times;</button>
       <div class="modal-inner">
         <h2 id="jobModalTitle">Candidatura para Vaga</h2>
-        <p class="modal-sub">Preencha seus dados para se candidatar. Você será redirecionado ao WhatsApp para concluir o envio com seu currículo.</p>
+        <p class="modal-sub">Preencha seus dados para se candidatar. Seu currículo será enviado diretamente para nossa equipe de RH.</p>
 
         <form id="jobApplicationForm" novalidate>
-          <input type="hidden" id="jobTitle" name="jobTitle" />
+          <input type="hidden" id="jobVagaId" name="vagaId" />
           
           <label for="jobApplicantName">Nome completo</label>
-          <input id="jobApplicantName" name="name" type="text" autocomplete="name" placeholder="Seu nome completo" required />
+          <input id="jobApplicantName" name="nome" type="text" autocomplete="name" placeholder="Seu nome completo" required />
 
           <label for="jobApplicantPhone">Telefone (WhatsApp)</label>
-          <input id="jobApplicantPhone" name="phone" type="tel" inputmode="tel" placeholder="(45) 9 9999-9999" required />
+          <input id="jobApplicantPhone" name="telefone" type="tel" inputmode="tel" placeholder="(45) 9 9999-9999" required />
 
           <label for="jobApplicantEmail">E-mail</label>
           <input id="jobApplicantEmail" name="email" type="email" autocomplete="email" placeholder="seu@exemplo.com" required />
           
           <label for="resumeFile">Currículo (PDF, DOC, DOCX)</label>
           <div class="file-input-wrapper">
-            <input id="resumeFile" name="resume" type="file" accept=".pdf,.doc,.docx" required />
+            <input id="resumeFile" name="curriculo" type="file" accept=".pdf,.doc,.docx" required />
             <label for="resumeFile" class="file-input-label">
               <i class="fas fa-upload"></i>
               <span class="file-input-text">Escolher arquivo...</span>
@@ -429,12 +428,31 @@
           </div>
 
           <div class="form-row">
-            <button type="submit" class="btn primary">Candidatar-se</button>
+            <button type="submit" class="btn primary">Enviar Candidatura</button>
             <button type="button" class="btn secondary modal-cancel">Cancelar</button>
           </div>
           <p id="jobFormMessage" class="form-message" aria-live="polite"></p>
         </form>
 
+      </div>
+    </div>
+  </div>
+
+  <div id="jobDetailsModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="jobDetailsModalTitle">
+    <div class="modal-backdrop" aria-hidden="true"></div>
+    <div class="modal-panel" role="document">
+      <button class="modal-close" aria-label="Fechar" type="button">&times;</button>
+      <div class="modal-inner">
+        <h2 id="jobDetailsModalTitle">Detalhes da Vaga</h2>
+        <p id="jobDetailsModalSubtitle" class="modal-sub"></p>
+
+        <div id="jobDetailsModalContent" class="job-details-content">
+          </div>
+
+        <div class="form-row">
+          <button type="button" class="btn primary" id="applyFromDetailsBtn">Candidatar-se Agora</button>
+          <button type="button" class="btn secondary modal-cancel">Fechar</button>
+        </div>
       </div>
     </div>
   </div>

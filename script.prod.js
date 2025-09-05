@@ -1,4 +1,4 @@
-// Site Mundial Telecom — JS de produção (versão com correção de responsividade definitiva)
+// Site Mundial Telecom — JS de produção (versão com correção de responsividade definitiva e envio de currículos via FormData base64 para evitar CORS)
 (function () {
   "use strict";
 
@@ -10,6 +10,7 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     // --- VARIÁVEIS GLOBAIS ---
+    
     const G_SCRIPT_URL ="https://script.google.com/macros/s/AKfycbwhH0XjEWdIRhoqPiWw3oqe94P7TN4I3ev2ldiBZL_C5kP7YhPXROQlvRutOP1oImvl/exec";
     const container = $(".fullpage-container");
     const footer = $(".main-footer");
@@ -113,9 +114,10 @@
       }
     }
 
-    // --- LÓGICA DE GERENCIAMENTO DE VAGAS ---
+    // --- LÓGICA DE GERENCIAMENTO DE VAGAS (MODIFICADO) ---
     const jobListingsContainer = $(".job-listings");
     if (jobListingsContainer) {
+      // Impede que a rolagem dentro da lista de vagas acione a rolagem da página inteira
       jobListingsContainer.addEventListener("wheel", (event) => {
         if (
           jobListingsContainer.scrollHeight > jobListingsContainer.clientHeight
@@ -123,30 +125,29 @@
           event.stopPropagation();
         }
       });
-    }
+      
+      // --- MODIFICADO: Usa delegação de eventos para os botões ---
+      jobListingsContainer.addEventListener('click', (event) => {
+        const target = event.target;
+        const card = target.closest('.job-card');
+        if (!card) return;
 
-    function attachJobCardListeners() {
-      $all(".job-card").forEach((card) => {
-        card.removeEventListener("click", openJobModalOnClick);
-        card.removeEventListener("keydown", openJobModalOnKey);
-        card.addEventListener("click", openJobModalOnClick);
-        card.addEventListener("keydown", openJobModalOnKey);
+        const jobData = {
+          jobId: card.dataset.jobId,
+          jobTitle: card.dataset.jobTitle,
+          jobDesc: card.dataset.jobDesc,
+          jobReq: card.dataset.jobReq,
+          jobBen: card.dataset.jobBen,
+          jobSetor: card.dataset.jobSetor
+        };
+
+        if (target.matches('.btn-details')) {
+          openModal($('#jobDetailsModal'), jobData);
+        } else if (target.closest('.job-card-apply')) {
+          event.preventDefault();
+          openModal($('#jobApplicationModal'), jobData);
+        }
       });
-    }
-
-    function openJobModalOnClick(event) {
-      const card = event.currentTarget;
-      const jobTitle = card.getAttribute("data-job-title");
-      openModal($("#jobApplicationModal"), { jobTitle });
-    }
-
-    function openJobModalOnKey(event) {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        const card = event.currentTarget;
-        const jobTitle = card.getAttribute("data-job-title");
-        openModal($("#jobApplicationModal"), { jobTitle });
-      }
     }
 
     async function loadJobVacancies() {
@@ -158,7 +159,6 @@
         if (!response.ok) throw new Error("Falha ao buscar vagas.");
         const vagas = await response.json();
         
-        // MODIFICAÇÃO: Filtra as vagas para mostrar apenas as com Status "Aberta"
         const vagasAbertas = vagas.filter(vaga => vaga.Status === "Aberta");
 
         container.innerHTML = "";
@@ -167,12 +167,28 @@
           container.innerHTML =
             '<p class="jobs-message">Nenhuma vaga aberta no momento. Volte em breve!</p>';
         } else {
-          // Itera sobre a lista filtrada de vagas abertas
           vagasAbertas.forEach((vaga) => {
-            const cardHTML = `<div class="job-card" role="button" tabindex="0" data-job-title="${vaga.Titulo}"><div class="job-card-header"><h4>${vaga.Titulo}</h4><span class="job-card-department">${vaga.Setor}</span></div><p class="job-card-description">${vaga.Descricao}</p><span class="job-card-apply">Candidatar-se <i class="fas fa-arrow-right"></i></span></div>`;
+            // --- MODIFICADO: Adiciona todos os detalhes como data attributes e o novo botão ---
+            const cardHTML = `
+              <div class="job-card" 
+                data-job-id="${vaga.ID_Vaga}" 
+                data-job-title="${vaga.Titulo}" 
+                data-job-setor="${vaga.Setor}"
+                data-job-desc="${vaga.Descricao}"
+                data-job-req="${vaga.Requisitos || ''}"
+                data-job-ben="${vaga.Beneficios || ''}">
+                <div class="job-card-header">
+                  <h4>${vaga.Titulo}</h4>
+                  <span class="job-card-department">${vaga.Setor}</span>
+                </div>
+                <p class="job-card-description">${vaga.Descricao.substring(0, 120)}...</p>
+                <div class="job-card-actions">
+                    <button class="btn-details">Ver Detalhes</button>
+                    <a href="#" class="job-card-apply">Candidatar-se <i class="fas fa-arrow-right"></i></a>
+                </div>
+              </div>`;
             container.insertAdjacentHTML("beforeend", cardHTML);
           });
-          attachJobCardListeners();
         }
       } catch (error) {
         console.error("Erro ao carregar vagas:", error);
@@ -424,10 +440,8 @@
       /*...*/
     })(); // Conteúdo original omitido para brevidade
 
-    // --- CÓDIGO RESTANTE (MODAIS, FORMULÁRIOS, ETC.) PERMANECE O MESMO ---
-    // ... (O restante do seu código original de modais, formulários, etc., vai aqui)
+    // --- CÓDIGO REMANESCENTE (MODAIS, FORMULÁRIOS, ETC.) PERMANECE O MESMO ---
 
-    // Colando o conteúdo omitido para garantir a integridade do arquivo:
     (function initPlanCarousel() {
       const carousel = $(".plan-carousel");
       if (!carousel) return;
@@ -648,8 +662,11 @@
       visionOverlay = $("#vision-overlay");
     let activeModal = null,
       activeOverlay = null;
+
+    // --- MODIFICADO: Função openModal agora lida com o novo modal de detalhes ---
     function openModal(modal, options = {}) {
       if (!modal) return;
+      
       if (modal.id === "planFormModal" && options.planName) {
         const planSelect = $("#planSelect", modal),
           planForm = $("#planForm", modal);
@@ -658,17 +675,46 @@
         planSelect.value = options.planName;
         setTimeout(() => $("#fullName", modal).focus(), 120);
       }
-      if (modal.id === "jobApplicationModal" && options.jobTitle) {
-        const jobTitleInput = $("#jobTitle", modal),
+      
+      if (modal.id === "jobApplicationModal" && options.jobId) {
+        const jobVagaIdInput = $("#jobVagaId", modal),
           jobModalTitle = $("#jobModalTitle", modal),
           jobForm = $("#jobApplicationForm", modal);
         jobForm.reset();
         $(".file-input-text").textContent = "Escolher arquivo...";
         $("#jobFormMessage").textContent = "";
-        jobTitleInput.value = options.jobTitle;
+        jobVagaIdInput.value = options.jobId; 
         jobModalTitle.textContent = `Candidatura: ${options.jobTitle}`;
         setTimeout(() => $("#jobApplicantName", modal).focus(), 120);
       }
+
+      // --- NOVO: Lógica para popular o modal de detalhes da vaga ---
+      if (modal.id === "jobDetailsModal" && options.jobId) {
+        $('#jobDetailsModalTitle').textContent = options.jobTitle;
+        $('#jobDetailsModalSubtitle').textContent = `Vaga no setor ${options.jobSetor}`;
+        
+        const contentContainer = $('#jobDetailsModalContent');
+        contentContainer.innerHTML = `
+          <div class="job-detail-section">
+            <h3>Descrição Completa</h3>
+            <p>${options.jobDesc || 'Não especificado.'}</p>
+          </div>
+          <div class="job-detail-section">
+            <h3>Requisitos</h3>
+            <p>${options.jobReq || 'Não especificado.'}</p>
+          </div>
+          <div class="job-detail-section">
+            <h3>Benefícios</h3>
+            <p>${options.jobBen || 'Não especificado.'}</p>
+          </div>
+        `;
+        
+        const applyBtn = $('#applyFromDetailsBtn');
+        // Armazena os dados no botão para uso posterior
+        applyBtn.dataset.jobId = options.jobId;
+        applyBtn.dataset.jobTitle = options.jobTitle;
+      }
+
       if (modal.id === "modal-mission") {
         const steps = $all(".mission-step", modal);
         const observer = new IntersectionObserver(
@@ -683,12 +729,24 @@
         );
         steps.forEach((step) => observer.observe(step));
       }
+
       modal.classList.add("open");
       modal.setAttribute("aria-hidden", "false");
       isInteractionOverlayOpen = true;
       activeModal = modal;
       trapFocus(modal);
     }
+    
+    // --- NOVO: Event listener para o botão "Candidatar-se" dentro do modal de detalhes ---
+    $('#applyFromDetailsBtn')?.addEventListener('click', (e) => {
+        const { jobId, jobTitle } = e.target.dataset;
+        closeModal(); // Fecha o modal de detalhes
+        // Abre o modal de candidatura com os dados corretos
+        setTimeout(() => {
+            openModal($('#jobApplicationModal'), { jobId, jobTitle });
+        }, 300); // Pequeno delay para a transição ficar mais suave
+    });
+
     function closeModal() {
       if (!activeModal) return;
       activeModal.classList.remove("open");
@@ -766,34 +824,105 @@
       const fileInputText = $(".file-input-text");
       if (fileInputText) fileInputText.textContent = fileName;
     });
+    
+    // ***** LÓGICA DE SUBMISSÃO DO FORMULÁRIO DE VAGAS: AGORA VIA FormData (sem headers) PARA EVITAR CORS *****
     const jobApplicationForm = $("#jobApplicationForm");
+
+    async function sendApplicationAsFormData(formEl) {
+      const formMessage = $("#jobFormMessage");
+      const submitButton = $("button[type='submit']", formEl);
+      try {
+        formMessage.textContent = "Enviando sua candidatura, aguarde...";
+        formMessage.className = "form-message";
+        submitButton.disabled = true;
+
+        const nome = (formEl.querySelector('[name="nome"]') || {}).value || '';
+        const telefone = (formEl.querySelector('[name="telefone"]') || {}).value || '';
+        const email = (formEl.querySelector('[name="email"]') || {}).value || '';
+        const vagaIdInput = formEl.querySelector('[name="vagaId"]') || formEl.querySelector('#jobVagaId');
+        const vagaId = (vagaIdInput && (vagaIdInput.value || vagaIdInput.getAttribute('value'))) || '';
+        const fileInput = formEl.querySelector('[name="curriculo"]');
+
+        if (!nome || !telefone || !email || !fileInput || !fileInput.files || fileInput.files.length === 0) {
+          formMessage.textContent = "Por favor, preencha todos os campos e anexe seu currículo.";
+          formMessage.classList.add("error");
+          submitButton.disabled = false;
+          return;
+        }
+
+        const file = fileInput.files[0];
+
+        // validação rápida de extensão/tamanho
+        if (file.size > 5 * 1024 * 1024) { // 5 MB
+          formMessage.textContent = "Arquivo muito grande (máx 5MB).";
+          formMessage.classList.add("error");
+          submitButton.disabled = false;
+          return;
+        }
+
+        // Lê base64 (ainda assim enviaremos em FormData para evitar preflight)
+        const reader = new FileReader();
+        const base64 = await new Promise((resolve, reject) => {
+          reader.onerror = () => reject(new Error('Erro ao ler o arquivo.'));
+          reader.onload = () => resolve(reader.result.split(',')[1]); // remove "data:*/*;base64,"
+          reader.readAsDataURL(file);
+        });
+
+        // Monta FormData (sem headers explícitos) — evita preflight
+        const fd = new FormData();
+        fd.append('action', 'applyForVagaBase64'); // será tratado no doPost como multipart
+        fd.append('nome', nome);
+        fd.append('telefone', telefone);
+        fd.append('email', email);
+        fd.append('vagaId', vagaId);
+        fd.append('fileName', file.name);
+        fd.append('fileMime', file.type || 'application/octet-stream');
+        fd.append('fileBase64', base64);
+
+        // Envia sem definir headers - permite browser escolher boundary e evita pré-flight
+        const res = await fetch(G_SCRIPT_URL, {
+          method: 'POST',
+          body: fd,
+        });
+
+        // sempre checar res.ok; ler texto se não JSON
+        if (!res.ok) {
+          const txt = await res.text().catch(()=> 'Resposta não disponível');
+          throw new Error(`Erro na requisição: ${res.status} ${res.statusText} — ${txt}`);
+        }
+
+        // tentar ler JSON
+        const data = await res.json().catch(async ()=> {
+          const t = await res.text().catch(()=> '');
+          throw new Error('Resposta inválida do servidor: ' + t);
+        });
+
+        if (data.status === 'success') {
+          formMessage.textContent = "Candidatura enviada com sucesso! Agradecemos o seu interesse.";
+          formMessage.classList.add("success");
+          formEl.reset();
+          $('.file-input-text').textContent = "Escolher arquivo...";
+          setTimeout(() => {
+            closeModal();
+          }, 2500);
+        } else {
+          throw new Error(data.message || 'Ocorreu um erro desconhecido.');
+        }
+      } catch (err) {
+        console.error('Erro ao enviar FormData base64:', err);
+        formMessage.textContent = `Erro ao enviar: ${err.message}`;
+        formMessage.classList.add("error");
+      } finally {
+        $("button[type='submit']", formEl).disabled = false;
+      }
+    }
+
+    // Substitui o submit handler para usar FormData fallback (evita CORS preflight)
     jobApplicationForm?.addEventListener("submit", (e) => {
       e.preventDefault();
-      const formMessage = $("#jobFormMessage");
-      formMessage.textContent = "";
-      formMessage.classList.remove("error");
-      const jobTitle = $("#jobTitle").value,
-        name = $("#jobApplicantName").value,
-        phone = $("#jobApplicantPhone").value,
-        email = $("#jobApplicantEmail").value,
-        resumeFile = $("#resumeFile").files[0];
-      if (!name || !phone || !email || !resumeFile) {
-        formMessage.textContent =
-          "Por favor, preencha todos os campos e anexe seu currículo.";
-        formMessage.classList.add("error");
-        return;
-      }
-      const RH_Phone = "554598110375";
-      const message = `Olá! Tenho interesse na vaga de *${jobTitle}*.\n\n*Nome:* ${name}\n*Telefone:* ${phone}\n*E-mail:* ${email}\n\nEstou enviando meu currículo em anexo para avaliação.`;
-      const encodedMessage = encodeURIComponent(message);
-      const whatsappUrl = `https://wa.me/${RH_Phone}?text=${encodedMessage}`;
-      formMessage.textContent =
-        "Quase lá! Redirecionando para o WhatsApp. Por favor, anexe seu currículo na conversa antes de enviar.";
-      setTimeout(() => {
-        window.open(whatsappUrl, "_blank");
-        closeModal();
-      }, 2000);
+      sendApplicationAsFormData(jobApplicationForm);
     });
+
     $all(".mv-card").forEach((card) => {
       const targetId = card.getAttribute("data-target"),
         targetElement = $(`#${targetId}`);
