@@ -135,17 +135,9 @@
     }
 
     function openJobModalOnClick(event) {
-    const card = event.currentTarget;
-    const jobTitle = card.getAttribute("data-job-title");
-
-    // Dispara evento para o Google Analytics
-    if (typeof gtag === 'function') {
-      gtag('event', 'view_job_application', {
-        'job_title': jobTitle
-      });
-    }
-
-    openModal($("#jobApplicationModal"), { jobTitle });
+      const card = event.currentTarget;
+      const jobTitle = card.getAttribute("data-job-title");
+      openModal($("#jobApplicationModal"), { jobTitle });
     }
 
     function openJobModalOnKey(event) {
@@ -165,12 +157,18 @@
         const response = await fetch(G_SCRIPT_URL);
         if (!response.ok) throw new Error("Falha ao buscar vagas.");
         const vagas = await response.json();
+        
+        // MODIFICAÇÃO: Filtra as vagas para mostrar apenas as com Status "Aberta"
+        const vagasAbertas = vagas.filter(vaga => vaga.Status === "Aberta");
+
         container.innerHTML = "";
-        if (vagas.length === 0) {
+
+        if (vagasAbertas.length === 0) {
           container.innerHTML =
             '<p class="jobs-message">Nenhuma vaga aberta no momento. Volte em breve!</p>';
         } else {
-          vagas.forEach((vaga) => {
+          // Itera sobre a lista filtrada de vagas abertas
+          vagasAbertas.forEach((vaga) => {
             const cardHTML = `<div class="job-card" role="button" tabindex="0" data-job-title="${vaga.Titulo}"><div class="job-card-header"><h4>${vaga.Titulo}</h4><span class="job-card-department">${vaga.Setor}</span></div><p class="job-card-description">${vaga.Descricao}</p><span class="job-card-apply">Candidatar-se <i class="fas fa-arrow-right"></i></span></div>`;
             container.insertAdjacentHTML("beforeend", cardHTML);
           });
@@ -418,7 +416,7 @@
       });
     });
 
-    // --- CARROSSÉIS E MODAIS (Lógicas inalteradas) ---
+    // --- CARROSSELIS E MODAIS (Lógicas inalteradas) ---
     (function initPlanCarousel() {
       /*...*/
     })(); // Conteúdo original omitido para brevidade
@@ -768,10 +766,7 @@
       const fileInputText = $(".file-input-text");
       if (fileInputText) fileInputText.textContent = fileName;
     });
-
-
     const jobApplicationForm = $("#jobApplicationForm");
-
     jobApplicationForm?.addEventListener("submit", (e) => {
       e.preventDefault();
       const formMessage = $("#jobFormMessage");
@@ -788,14 +783,6 @@
         formMessage.classList.add("error");
         return;
       }
-
-      // Dispara evento de conversão para o Google Analytics
-      if (typeof gtag === 'function') {
-        gtag('event', 'submit_job_application', {
-            'job_title': jobTitle
-        });
-      }
-
       const RH_Phone = "554598110375";
       const message = `Olá! Tenho interesse na vaga de *${jobTitle}*.\n\n*Nome:* ${name}\n*Telefone:* ${phone}\n*E-mail:* ${email}\n\nEstou enviando meu currículo em anexo para avaliação.`;
       const encodedMessage = encodeURIComponent(message);
@@ -807,8 +794,6 @@
         closeModal();
       }, 2000);
     });
-
-
     $all(".mv-card").forEach((card) => {
       const targetId = card.getAttribute("data-target"),
         targetElement = $(`#${targetId}`);
